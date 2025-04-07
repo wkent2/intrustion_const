@@ -267,7 +267,8 @@ def check_contained(mask, sphere_kernel, center):
 
 
 def calc_iPSD(mask,diams,fast=True,verbose=False,num_faces=6):
-    print("Will compute with",num_faces,"faces")
+    if verbose:
+        print("Will compute with",num_faces,"faces")
     
     # Initialize array with all 6 faces
     if num_faces == 6:
@@ -434,7 +435,7 @@ def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6):
         end = time.time()
         print("It took",round((end-begin)/60,2),"minutes for one subvolume")
     
-    return const
+    return const,phases
         
 def subvol_wrapper(arguments):
     
@@ -443,13 +444,63 @@ def subvol_wrapper(arguments):
     
     # Load volume
     vol = np.load(filepath)
-    
-    # Compute constrictivities
-    consts = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
-    
-    return consts
-    
 
+    try:
+    
+        # Compute constrictivities
+        consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
+    except:
+        # Return nan values if something went wrong
+        consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2])
+
+    result = np.array([consts,phases])
+
+    return result
+    
+def process_results(results):
+
+    # Get unique number of phases
+    unique_phases = []
+
+    # Iterate through all intrusion results
+    for res in results:
+        
+        # Pull out results
+        consts,phases = res 
+
+        # Iterate through all phases
+        for i in range(len(phases)):
+            # Check if new phase present
+            if phases[i] not in unique_phases:
+                # Add new phase
+                unique_phases.append(phases[i])
+
+    # Sort phases
+    unique_phases = np.array(sorted(unique_phases))
+
+    value_to_index = {value: idx for idx, value in enumerate(unique_phases)}
+
+    # Initialize array to store final results
+    final_consts = np.zeros(shape=(len(results),len(unique_phases)))
+
+    # Iterate through all intrusion results
+    for i,res in enumerate(results):
+        
+        # Pull out results
+        consts,phases = res 
+
+        # Iterates thr-ough all phases
+        for j in range(len(phases)):
+            # Assigns beta value to the correct position
+            final_consts[i,value_to_index[phases[j]]] = consts[j]
+
+    # Give all 0 values nan
+    final_consts[final_consts==0]=np.nan
+
+    # Creates column labels
+    column_names = ['C'+str(int(phase)) for phase in unique_phases]
+
+    return final_consts, column_names
 
 if __name__ == "__main__":
     
@@ -471,17 +522,19 @@ if __name__ == "__main__":
         for arg in tqdm(arguments):
             constrictivities.append(subvol_wrapper(arg))
         
-        final_consts = np.array(constrictivities)
+        
     
     # Run in parallel mode
     elif args.c == 'parallel':
         constrictivities = pqdm(arguments,subvol_wrapper,n_jobs=mp.cpu_count())
-        final_consts = np.array(constrictivities)
+    
+    # Handle errors and number of phases 
+    final_consts, column_names = process_results(constrictivities)
     
     # print(final_consts.shape)
     # print(final_consts)
     # Compile data into DataFrame and save as .csv file
-    data = pd.DataFrame(final_consts,columns=['C1','C2','C3'],index=files)
+    data = pd.DataFrame(final_consts,columns=column_names,index=files)
     
     savepath = os.path.join(args.subvol_dir,'constrictivity_results.csv')
     
