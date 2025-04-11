@@ -4,6 +4,7 @@ import os
 import argparse
 from tqdm import tqdm
 from Intrusion import get_seed_points
+from pqdm.processes import pqdm
 
 def parseargs():
     p = argparse.ArgumentParser(description="Checks if there are any subvolumes with faces not containing all subvolume phases.")
@@ -18,6 +19,7 @@ def parseargs():
 
 def check_subvol(filepath):
 
+	
 	vol = np.load(filepath)
 
 	phases = np.unique(vol)
