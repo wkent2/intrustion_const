@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 
     # Compiles results
-    contained = np.array(contained)
+    contained = np.concatenate(contained,axis=0)
 
     # Formats results into dataframe
     data = pd.DataFrame(contained,columns=['P1','P2','P3'],index=files)
