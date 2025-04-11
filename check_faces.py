@@ -31,21 +31,21 @@ def check_subvol(filepath):
 
 		# Creates a mask of the phase
 		mask = np.zeros_like(vol)
-        mask[vol==phase] = 1
+		mask[vol==phase] = 1
 
-        present = 1
+		present = 1
 		# Checks each face
 		for j,face in enumerate(faces):
-	        if verbose:
-	            print("Doing intrusion for",face,"face")
+			if verbose:
+				print("Doing intrusion for",face,"face")
            
-	        # Get seed coordinates and padded array
-	        binary_array, seed_coords = get_seed_points(mask, face, 1)
-	        if len(seed_coord)==0:
-	        	present = 0
-	        	break
+			# Get seed coordinates and padded array
+			binary_array, seed_coords = get_seed_points(mask, face, 1)
+			if len(seed_coord)==0:
+				present = 0
+				break
 
-	    contains_phase[i] = present
+		contains_phase[i] = present
 
 	return contains_phase
 
