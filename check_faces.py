@@ -44,7 +44,7 @@ def check_subvol(filepath):
            
 			# Get seed coordinates and padded array
 			binary_array, seed_coords = get_seed_points(mask, face, 1)
-			if len(seed_coord)==0:
+			if len(seed_coords)==0:
 				present = 0
 				break
 
