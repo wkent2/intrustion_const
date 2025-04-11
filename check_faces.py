@@ -25,7 +25,7 @@ def check_subvol(filepath):
 	try:
 		vol = np.load(filepath)
 	except:
-		return np.zeros(shape=len(phases))
+		return np.zeros(3)
 
 	phases = np.unique(vol)
 
