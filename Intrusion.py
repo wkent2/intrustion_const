@@ -446,7 +446,6 @@ def subvol_wrapper(arguments):
     vol = np.load(filepath)
 
     try:
-    
         # Compute constrictivities
         consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
     except:
@@ -465,15 +464,18 @@ def process_results(results):
     # Iterate through all intrusion results
     for res in results:
         
-        # Pull out results
-        consts,phases = res 
+        try:
+            # Pull out results
+            consts,phases = res 
 
-        # Iterate through all phases
-        for i in range(len(phases)):
-            # Check if new phase present
-            if phases[i] not in unique_phases:
-                # Add new phase
-                unique_phases.append(phases[i])
+            # Iterate through all phases
+            for i in range(len(phases)):
+                # Check if new phase present
+                if phases[i] not in unique_phases:
+                    # Add new phase
+                    unique_phases.append(phases[i])
+        except:
+            pass
 
     # Sort phases
     unique_phases = np.array(sorted(unique_phases))
@@ -486,13 +488,17 @@ def process_results(results):
     # Iterate through all intrusion results
     for i,res in enumerate(results):
         
-        # Pull out results
-        consts,phases = res 
+        try:
+            # Pull out results
+            consts,phases = res 
 
-        # Iterates thr-ough all phases
-        for j in range(len(phases)):
-            # Assigns beta value to the correct position
-            final_consts[i,value_to_index[phases[j]]] = consts[j]
+
+            # Iterates thr-ough all phases
+            for j in range(len(phases)):
+                # Assigns beta value to the correct position
+                final_consts[i,value_to_index[phases[j]]] = consts[j]
+        except:
+            pass
 
     # Give all 0 values nan
     final_consts[final_consts==0]=np.nan
