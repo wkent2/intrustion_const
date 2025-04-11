@@ -22,8 +22,10 @@ def parseargs():
 
 def check_subvol(filepath):
 
-	
-	vol = np.load(filepath)
+	try:
+		vol = np.load(filepath)
+	except:
+		return np.zeros(shape=len(phases))
 
 	phases = np.unique(vol)
 
@@ -49,7 +51,7 @@ def check_subvol(filepath):
 				break
 
 		contains_phase[i] = present
-		
+
 	return contains_phase
 
 

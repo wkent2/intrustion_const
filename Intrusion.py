@@ -442,15 +442,19 @@ def subvol_wrapper(arguments):
     # Extract arguments
     filepath,fast,plot_dists,verbose,num_faces = arguments
     
-    # Load volume
-    vol = np.load(filepath)
-
     try:
-        # Compute constrictivities
-        consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
+        # Load volume
+        vol = np.load(filepath)
+
+        try:
+            # Compute constrictivities
+            consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
+        except:
+            # Return nan values if something went wrong
+            consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2])
+            
     except:
-        # Return nan values if something went wrong
-        consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2])
+        consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2]) 
 
     result = np.array([consts,phases])
 
