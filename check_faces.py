@@ -6,6 +6,8 @@ from tqdm import tqdm
 from Intrusion import get_seed_points
 from pqdm.processes import pqdm
 import multiprocessing as mp
+import pandas as pd
+
 
 def parseargs():
     p = argparse.ArgumentParser(description="Checks if there are any subvolumes with faces not containing all subvolume phases.")
