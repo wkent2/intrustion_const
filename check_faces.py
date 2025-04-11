@@ -41,8 +41,6 @@ def check_subvol(filepath):
 		present = 1
 		# Checks each face
 		for j,face in enumerate(faces):
-			if verbose:
-				print("Doing intrusion for",face,"face")
            
 			# Get seed coordinates and padded array
 			binary_array, seed_coords = get_seed_points(mask, face, 1)
