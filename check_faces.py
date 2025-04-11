@@ -72,7 +72,7 @@ if __name__ == "__main__":
     
     # Run in parallel mode
     elif args.c == 'parallel':
-        contained = pqdm(filepath,check_subvol,n_jobs=mp.cpu_count())
+        contained = pqdm(filepaths,check_subvol,n_jobs=mp.cpu_count())
 
 
     # Compiles results
