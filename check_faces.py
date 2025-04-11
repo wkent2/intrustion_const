@@ -49,9 +49,7 @@ def check_subvol(filepath):
 				break
 
 		contains_phase[i] = present
-
-	print(contains_phase)
-
+		
 	return contains_phase
 
 
