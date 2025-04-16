@@ -19,7 +19,7 @@ def parseargs():
     p.add_argument('-f','-fast',type=bool,default=True,help="Whether or not to run in FAST mode (highly reccommended).")
     p.add_argument('-p','-plot',type=bool,default=False,help="Whether or not to plot PSDs. This is not fully implelemented.")
     p.add_argument('-nf','-num_faces',type=int,choices=[1,3,6],default=6,help="How many faces to intrude for each constricitivity caluclation.")
-
+    p.add_argument('-save_int',type=bool,default=False,help="Whether or not to save intrusions.")
     args = p.parse_args()
     
     return args
@@ -266,7 +266,7 @@ def check_contained(mask, sphere_kernel, center):
 
 
 
-def calc_iPSD(mask,diams,fast=True,verbose=False,num_faces=6):
+def calc_iPSD(mask,diams,phase,fast=True,verbose=False,num_faces=6,save_int=False):
     if verbose:
         print("Will compute with",num_faces,"faces")
     
@@ -287,7 +287,7 @@ def calc_iPSD(mask,diams,fast=True,verbose=False,num_faces=6):
     
     for j,face in enumerate(faces):
         if verbose:
-            print("Doing intrusion for",face,"face")
+            print("Doing intrusion for",face,"face of phase",phase)
            
         # Get seed coordinates and padded array
         binary_array, seed_coords = get_seed_points(mask, face, int(np.amax(diams)/2))
@@ -307,6 +307,10 @@ def calc_iPSD(mask,diams,fast=True,verbose=False,num_faces=6):
             
             # Remove padding from intrusion
             intruded_final = remove_padding(intruded, face, int(diam/2))
+
+            if save_int:
+                savename = './phase_'+str(phase)+'_face_'+face'_diam_'+str(diam)+'.npy'
+                np.save(savename,intruded_final)
             
             # Counts intruded voxels 
             voxels[j,i] = np.count_nonzero(intruded_final)    
@@ -329,10 +333,10 @@ def calc_iPSD(mask,diams,fast=True,verbose=False,num_faces=6):
         voxels_final[i] = np.mean(voxels[:,i])
     return voxels_final
 
-def get_constrictivity(mask,fast=True,ret_dist=False,verbose=False,num_faces=6):
+def get_constrictivity(mask,phase,fast=True,ret_dist=False,verbose=False,num_faces=6,save_int=False):
     
     if verbose:
-        print("Computing diameter map for cPSD")
+        print("Computing diameter map for cPSD on phase",phase)
     
     # Compute sphere opening (diameter map)
     _,_,dmap = size_dist_basic(mask,padding=False,verbose=False)
@@ -341,17 +345,17 @@ def get_constrictivity(mask,fast=True,ret_dist=False,verbose=False,num_faces=6):
     diams = np.arange(np.amax(dmap),0,-2)
     
     if verbose:
-        print("Computing cPSD")
+        print("Computing cPSD for phase",phase)
         
     # Compute the continuous particle size distribution (cPSD)
     cPSD = np.array([np.count_nonzero(dmap[dmap>=d]) for d in diams]) 
     
     if verbose:
-        print("Performing intrusions for iPSD")
+        print("Performing intrusions for iPSD into phase",phase)
     
     # Compute the intrusion particle size distribution (iPSD)
     # diams[1:] skips diameter=1, not necessary 
-    iPSD = calc_iPSD(mask,diams,fast=fast,verbose=verbose,num_faces=num_faces)
+    iPSD = calc_iPSD(mask,diams,phase,fast=fast,verbose=verbose,num_faces=num_faces,save_int=save_int)
     
     # Reverse order
     diams = diams[::-1]
@@ -378,7 +382,7 @@ def get_constrictivity(mask,fast=True,ret_dist=False,verbose=False,num_faces=6):
     else:
         return const
 
-def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6):
+def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6,save_int=False):
     
     if verbose:
         if fast:
@@ -412,7 +416,7 @@ def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6):
         
         # Compute constrictivity factor
         if plot_dists:
-            const[i],cPSD, iPSD, diams,rmin,rmax = get_constrictivity(mask,fast=fast,ret_dist=True,verbose=verbose,num_faces=num_faces)
+            const[i],cPSD, iPSD, diams,rmin,rmax = get_constrictivity(mask,phase,fast=fast,ret_dist=True,verbose=verbose,num_faces=num_faces,save_int=save_int)
             
             plt.close('all')
             plt.figure(figsize=(7,5))
@@ -428,7 +432,7 @@ def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6):
             savename = './'+str(i)+'_PSDs.png'
             plt.savefig(savename,dpi=300)
         else:
-            const[i] = get_constrictivity(mask,fast=fast,ret_dist=False,verbose=verbose,num_faces=num_faces)
+            const[i] = get_constrictivity(mask,fast=fast,ret_dist=False,verbose=verbose,num_faces=num_faces,save_int=save_int)
         
     if verbose:
         print("Done!")
@@ -440,7 +444,7 @@ def subvol_const(vol,fast=True,plot_dists=False,verbose=False,num_faces=6):
 def subvol_wrapper(arguments):
     
     # Extract arguments
-    filepath,fast,plot_dists,verbose,num_faces = arguments
+    filepath,fast,plot_dists,verbose,num_faces,save_int = arguments
     
     try:
         # Load volume
@@ -448,7 +452,7 @@ def subvol_wrapper(arguments):
 
         try:
             # Compute constrictivities
-            consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces)
+            consts,phases = subvol_const(vol,fast=fast,plot_dists=plot_dists,verbose=verbose,num_faces=num_faces,save_int=save_int)
         except:
             # Return nan values if something went wrong
             consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2])
@@ -522,7 +526,7 @@ if __name__ == "__main__":
     
     # Create arguments
     filepaths = [os.path.join(args.subvol_dir,file) for file in os.listdir(args.subvol_dir) if file.endswith('.npy')]
-    arguments = [(filepath,args.f,args.p,args.v,args.nf) for filepath in filepaths]
+    arguments = [(filepath,args.f,args.p,args.v,args.nf,args.save_int) for filepath in filepaths]
     
     print("Running in",args.c,"mode")
     print("Will intrude",args.nf,"faces per subvolume")
