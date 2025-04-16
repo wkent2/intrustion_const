@@ -503,7 +503,8 @@ def subvol_wrapper(arguments):
                 
                 if verbose:
                     print("Made save directory:",save_dir)
-
+            else:
+                save_dir=None
 
             # Compute constrictivities
             consts,phases = subvol_const(vol,
@@ -514,6 +515,7 @@ def subvol_wrapper(arguments):
                                         save_int=save_int,
                                         save_dir=save_dir)
         except:
+
             # Return nan values if something went wrong
             consts,phases = np.array([np.nan,np.nan,np.nan]),np.array([0,1,2])
             
